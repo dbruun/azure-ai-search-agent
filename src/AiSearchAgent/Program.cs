@@ -35,6 +35,12 @@ string sharePointIndex = config["SharePointSearch:IndexName"] ?? "sharepoint-ind
 bool sharePointEnabled = bool.TryParse(config["SharePointSearch:Enabled"], out bool spEnabled) && spEnabled;
 int sharePointTopK = int.TryParse(config["SharePointSearch:TopK"], out int spk) ? spk : topK;
 
+// Content Understanding index — optional multimodal knowledge source (semantic
+// chunking + AI image descriptions ingested via the Content Understanding skill).
+string cuIndex = config["ContentUnderstandingSearch:IndexName"] ?? "content-understanding-index";
+bool cuEnabled = bool.TryParse(config["ContentUnderstandingSearch:Enabled"], out bool cuOn) && cuOn;
+int cuTopK = int.TryParse(config["ContentUnderstandingSearch:TopK"], out int cutk) ? cutk : topK;
+
 // Shared credential for Entra ID (RBAC) auth when keys are not provided.
 var credential = new DefaultAzureCredential();
 
@@ -76,6 +82,25 @@ if (sharePointEnabled)
 }
 
 // -----------------------------------------------------------------------------
+// Content Understanding search tool (optional)
+//   Backed by an index populated with the Azure Content Understanding skill:
+//   semantic chunking, AI-generated image descriptions, and page location
+//   metadata. Shares the same field convention, so the same tool works as-is.
+// -----------------------------------------------------------------------------
+if (cuEnabled)
+{
+    SearchClient cuClient = searchApiKey is { Length: > 0 }
+        ? new SearchClient(new Uri(searchEndpoint), cuIndex, new AzureKeyCredential(searchApiKey))
+        : new SearchClient(new Uri(searchEndpoint), cuIndex, credential);
+    var cuTool = new AzureAiSearchTool(cuClient, cuTopK);
+
+    tools.Add(AIFunctionFactory.Create(
+        cuTool.SearchAsync,
+        name: "content_understanding_search",
+        description: "Search the Content Understanding index (multimodal documents chunked semantically, with AI-generated descriptions of embedded images, charts, and diagrams). Cite sourceDoc and page numbers."));
+}
+
+// -----------------------------------------------------------------------------
 // Chat model (gpt-4o on Azure OpenAI) + Agent Framework agent
 // -----------------------------------------------------------------------------
 AzureOpenAIClient openAiClient = openAiApiKey is { Length: > 0 }
@@ -99,7 +124,10 @@ AIAgent agent = new ChatClientAgent(chatClient, new ChatClientAgentOptions
 // -----------------------------------------------------------------------------
 AgentThread thread = agent.GetNewThread();
 
-string sources = sharePointEnabled ? $"{searchIndex} + {sharePointIndex} (ACL)" : searchIndex;
+var sourceList = new List<string> { searchIndex };
+if (sharePointEnabled) sourceList.Add($"{sharePointIndex} (ACL)");
+if (cuEnabled) sourceList.Add($"{cuIndex} (CU)");
+string sources = string.Join(" + ", sourceList);
 Console.WriteLine("AI Search Agent (gpt-4o + Azure AI Search: " + sources + ")");
 Console.WriteLine("Type your question, or an empty line to exit.");
 Console.WriteLine();

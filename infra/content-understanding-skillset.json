@@ -1,0 +1,67 @@
+{
+  "name": "content-understanding-skillset",
+  "description": "Semantic chunking, image descriptions, and vectorization with the Azure Content Understanding skill",
+  "skills": [
+    {
+      "@odata.type": "#Microsoft.Skills.Util.ContentUnderstandingSkill",
+      "name": "content-understanding-skill",
+      "context": "/document",
+      "modelName": "gpt-4.1",
+      "modelDeployment": "YOUR_GPT_CHAT_DEPLOYMENT",
+      "chunkingProperties": {
+        "method": "semantic",
+        "unit": "tokens",
+        "maximumLength": 500
+      },
+      "extractionOptions": ["images", "locationMetadata"],
+      "inputs": [
+        { "name": "file_data", "source": "/document/file_data" }
+      ],
+      "outputs": [
+        { "name": "text_sections", "targetName": "text_sections" },
+        { "name": "normalized_images", "targetName": "normalized_images" }
+      ]
+    },
+    {
+      "@odata.type": "#Microsoft.Skills.Text.AzureOpenAIEmbeddingSkill",
+      "name": "embedding-skill",
+      "context": "/document/text_sections/*",
+      "inputs": [
+        { "name": "text", "source": "/document/text_sections/*/content" }
+      ],
+      "outputs": [
+        { "name": "embedding", "targetName": "text_vector" }
+      ],
+      "resourceUri": "https://YOUR_AOAI_SUBDOMAIN.openai.azure.com",
+      "deploymentId": "text-embedding-3-large",
+      "modelName": "text-embedding-3-large",
+      "dimensions": 3072
+    }
+  ],
+  "cognitiveServices": {
+    "@odata.type": "#Microsoft.Azure.Search.AIServicesByIdentity",
+    "subdomainUrl": "https://YOUR_FOUNDRY_RESOURCE.cognitiveservices.azure.com"
+  },
+  "indexProjections": {
+    "selectors": [
+      {
+        "targetIndexName": "content-understanding-index",
+        "parentKeyFieldName": "parentId",
+        "sourceContext": "/document/text_sections/*",
+        "mappings": [
+          { "name": "chunk", "source": "/document/text_sections/*/content" },
+          { "name": "vector", "source": "/document/text_sections/*/text_vector" },
+          { "name": "pageFrom", "source": "/document/text_sections/*/locationMetadata/pageNumberFrom" },
+          { "name": "pageTo", "source": "/document/text_sections/*/locationMetadata/pageNumberTo" },
+          { "name": "imagePath", "source": "/document/text_sections/*/imagePath" },
+          { "name": "title", "source": "/document/metadata_storage_name" },
+          { "name": "sourceDoc", "source": "/document/metadata_storage_name" },
+          { "name": "url", "source": "/document/metadata_storage_path" }
+        ]
+      }
+    ],
+    "parameters": {
+      "projectionMode": "skipIndexingParentDocuments"
+    }
+  }
+}

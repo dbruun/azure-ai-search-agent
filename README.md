@@ -41,17 +41,23 @@ infra/
   sharepoint-index.json   ACL-enabled index (permissionFilter fields)
   sharepoint-datasource.json  SharePoint data source (ACL ingestion)
   sharepoint-indexer.json     SharePoint indexer + ACL field mappings
+  content-understanding-index.json       Chunk index for Content Understanding
+  content-understanding-skillset.json     CU skill + embedding + index projections
+  content-understanding-datasource.json   Blob data source
+  content-understanding-indexer.json       Indexer
 scripts/
   create-index.ps1            Creates documents-index via the Search REST API
   create-sharepoint-index.ps1 Creates the SharePoint ACL pipeline (preview API)
+  create-content-understanding-index.ps1  Creates the Content Understanding pipeline (preview API)
 ```
 
-## Two knowledge sources
+## Three knowledge sources
 
-| Index | Source | Access control |
+| Index | Source | Highlights |
 | --- | --- | --- |
-| `documents-index` | pushed documents | none (all results visible) |
+| `documents-index` | pushed documents | semantic search + citations |
 | `sharepoint-index` | SharePoint Online (indexer) | **document-level ACLs**, enforced at query time |
+| `content-understanding-index` | Blob (indexer + skillset) | **Azure AI Content Understanding**: semantic chunking, AI image descriptions, page metadata |
 
 The SharePoint index uses Azure AI Search **document-level access control (preview)**:
 the indexer ingests each item's `UserIds`/`GroupIds` permission metadata, and at
@@ -164,6 +170,59 @@ interactive credential) — not a service principal.
 | Index | `permissionFilterOption: enabled`; `UserIds`/`GroupIds`/`RbacScope` fields tagged with `permissionFilter` |
 | Ingest | SharePoint data source `indexerPermissionOptions`; indexer maps `metadata_user_ids`/`metadata_group_ids` (and `metadata_sharepoint_site_url` for group resolution) |
 | Query | user token in `x-ms-query-source-authorization`; the service builds an internal security filter and drops unauthorized docs |
+
+## 5. (Optional) Content Understanding index
+
+This adds a multimodal index populated by the **Azure AI Content Understanding**
+skill: it cracks each document, chunks it **semantically** (respecting headings/
+paragraphs), generates **AI descriptions of embedded images/charts/diagrams**, and
+captures **page location metadata** — then the Azure OpenAI embedding skill
+vectorizes each chunk. One search document is written per chunk via index projections.
+
+### Prerequisites
+
+- A **Foundry (Azure AI Services) resource** that supports Content Understanding, attached to the skillset.
+- An **Azure OpenAI** chat deployment (for image descriptions) and an **embedding** deployment (e.g. `text-embedding-3-large`).
+- An **Azure Blob** container with your source files (PDF, DOCX, PPTX, XLSX, images).
+- The search service configured with a **managed identity** and RBAC on the above resources (recommended).
+
+### Provision
+
+1. Replace the placeholders in the `infra/content-understanding-*.json` files:
+   - `content-understanding-datasource.json` — storage account resource ID
+   - `content-understanding-skillset.json` — `modelDeployment` (chat), embedding `resourceUri`/`deploymentId`, and `cognitiveServices.subdomainUrl` (Foundry resource)
+2. Create the pipeline with the preview API:
+
+   ```powershell
+   ./scripts/create-content-understanding-index.ps1 `
+     -SearchServiceName trsdemosearch `
+     -ResourceGroup TRSDemo `
+     -RunIndexer
+   ```
+
+### Enable in the app
+
+```jsonc
+// appsettings.json
+"ContentUnderstandingSearch": {
+  "Enabled": true,
+  "IndexName": "content-understanding-index",
+  "TopK": 11
+}
+```
+
+When enabled, the agent gains a `content_understanding_search` tool. The index uses
+the same field convention (`chunk`, `sourceDoc`, `title`, `pageFrom`/`pageTo`), so the
+existing search tool works against it unchanged.
+
+### How the pipeline works
+
+| Stage | What happens |
+| --- | --- |
+| Extract + chunk | Content Understanding skill cracks the document, chunks semantically, adds AI image descriptions + `locationMetadata` |
+| Vectorize | Azure OpenAI embedding skill embeds each chunk |
+| Project | `indexProjections` write one search document per chunk (`skipIndexingParentDocuments`) |
+| Query | semantic search over `sem` config; answers cite `sourceDoc` and page numbers |
 
 ## Tests
 

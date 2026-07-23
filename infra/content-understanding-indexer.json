@@ -1,0 +1,16 @@
+{
+  "name": "content-understanding-indexer",
+  "dataSourceName": "content-understanding-datasource",
+  "targetIndexName": "content-understanding-index",
+  "skillsetName": "content-understanding-skillset",
+  "parameters": {
+    "batchSize": 1,
+    "configuration": {
+      "dataToExtract": "contentAndMetadata",
+      "parsingMode": "default",
+      "allowSkillsetToReadFileData": true
+    }
+  },
+  "fieldMappings": [],
+  "outputFieldMappings": []
+}

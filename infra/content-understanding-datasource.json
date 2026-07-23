@@ -1,0 +1,11 @@
+{
+  "name": "content-understanding-datasource",
+  "type": "azureblob",
+  "credentials": {
+    "connectionString": "ResourceId=/subscriptions/YOUR_SUB/resourceGroups/TRSDemo/providers/Microsoft.Storage/storageAccounts/YOUR_STORAGE_ACCOUNT;"
+  },
+  "container": {
+    "name": "documents",
+    "query": null
+  }
+}

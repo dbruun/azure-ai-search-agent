@@ -128,6 +128,7 @@
         <span class="badge">Azure OpenAI · gpt-4o</span>
         <span class="badge">Azure AI Search</span>
         <span class="badge purple">SharePoint ACLs (preview)</span>
+        <span class="badge purple">Content Understanding (preview)</span>
         <span class="badge green">23 tests passing</span>
       </div>
       <h1>AI Search Agent</h1>
@@ -140,6 +141,7 @@
         <a class="btn primary" href="#quickstart">Get started</a>
         <a class="btn" href="#architecture">How it works</a>
         <a class="btn" href="#sharepoint">SharePoint ACLs</a>
+        <a class="btn" href="#content-understanding">Content Understanding</a>
         <a class="btn" href="https://github.com/dbruun/azure-ai-search-agent" id="repo-link">View on GitHub</a>
       </div>
     </div>
@@ -174,6 +176,10 @@
         <div class="card">
           <h3>🔒 SharePoint ACLs</h3>
           <p>An optional SharePoint index enforces <strong>document-level access control</strong> at query time (preview) — users only see what they're permitted to.</p>
+        </div>
+        <div class="card">
+          <h3>🧠 Content Understanding</h3>
+          <p>An optional index built with the <strong>Azure AI Content Understanding</strong> skill: semantic chunking, AI descriptions of images/charts, and page metadata.</p>
         </div>
       </div>
     </section>
@@ -270,6 +276,41 @@ sequenceDiagram
       <div class="note">
         ACL enforcement relies on the caller's identity, so the app authenticates as the
         <strong>signed-in user</strong> (not a service principal). API keys bypass ACLs and are not used for this index.
+      </div>
+    </section>
+
+    <!-- Content Understanding -->
+    <section id="content-understanding">
+      <h2>Content Understanding index <span class="badge purple" style="vertical-align:middle">preview</span></h2>
+      <p class="lead">
+        An optional index built with the <strong>Azure AI Content Understanding</strong> skill. Instead of
+        naive text extraction, it cracks each document, chunks it <em>semantically</em> (respecting headings
+        and paragraphs), generates natural-language <em>descriptions of embedded images, charts, and diagrams</em>,
+        and records page location metadata. An Azure OpenAI embedding skill then vectorizes every chunk.
+      </p>
+      <div class="diagram">
+        <pre class="mermaid">
+flowchart LR
+    B["Azure Blob<br/>(PDF, DOCX, PPTX, images)"] --> IX["Indexer"]
+    IX --> CU["Content Understanding skill<br/>semantic chunking + image descriptions + page metadata"]
+    CU --> EM["Azure OpenAI<br/>embedding skill"]
+    EM --> P["index projections<br/>(one doc per chunk)"]
+    P --> S["content-understanding-index"]
+    S --> AG["Agent"]
+        </pre>
+      </div>
+      <table>
+        <thead><tr><th>Stage</th><th>Mechanism</th></tr></thead>
+        <tbody>
+          <tr><td>Extract + chunk</td><td><code>Microsoft.Skills.Util.ContentUnderstandingSkill</code> with <code>chunkingProperties.method: semantic</code> and <code>extractionOptions: [images, locationMetadata]</code></td></tr>
+          <tr><td>Image descriptions</td><td><code>modelName</code> / <code>modelDeployment</code> (Azure OpenAI chat) inlined into chunk text before vectorization</td></tr>
+          <tr><td>Vectorize</td><td><code>Microsoft.Skills.Text.AzureOpenAIEmbeddingSkill</code></td></tr>
+          <tr><td>Project</td><td><code>indexProjections</code> write one search document per chunk (<code>skipIndexingParentDocuments</code>)</td></tr>
+        </tbody>
+      </table>
+      <div class="note">
+        Requires the <code>2026-05-01-preview</code> API and a Foundry (Azure AI Services) resource attached to the
+        skillset. The index uses the same field convention as the primary index, so the agent's search tool works against it unchanged.
       </div>
     </section>
 
