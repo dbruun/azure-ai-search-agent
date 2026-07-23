@@ -45,6 +45,8 @@ infra/
   content-understanding-skillset.json     CU skill + embedding + index projections
   content-understanding-datasource.json   Blob data source
   content-understanding-indexer.json       Indexer
+  content-understanding.bicep             Foundry/OpenAI account, deployments, storage, RBAC
+  content-understanding.parameters.json   Deployment parameters
 scripts/
   create-index.ps1            Creates documents-index via the Search REST API
   create-sharepoint-index.ps1 Creates the SharePoint ACL pipeline (preview API)
@@ -186,7 +188,32 @@ vectorizes each chunk. One search document is written per chunk via index projec
 - An **Azure Blob** container with your source files (PDF, DOCX, PPTX, XLSX, images).
 - The search service configured with a **managed identity** and RBAC on the above resources (recommended).
 
-### Provision
+> The Bicep in the next step provisions all of these and wires up the RBAC for you.
+
+### Provision the backing resources (Bicep)
+
+`content-understanding.bicep` creates the AI Services (Foundry) account with the
+`gpt-4o` and `text-embedding-3-large` deployments, a storage account + container,
+and the role assignments the search identity needs. Pass the
+`searchServicePrincipalId` output from `main.bicep`:
+
+```powershell
+$principalId = az deployment group show `
+  --resource-group TRSDemo --name main `
+  --query properties.outputs.searchServicePrincipalId.value -o tsv
+
+az deployment group create `
+  --resource-group TRSDemo `
+  --template-file infra/content-understanding.bicep `
+  --parameters infra/content-understanding.parameters.json `
+  --parameters searchServicePrincipalId=$principalId
+```
+
+The deployment outputs (`aiServicesEndpoint`, `chatDeploymentName`,
+`embeddingDeploymentName`, `storageAccountId`) are the values you plug into the
+JSON definitions below.
+
+### Provision the index pipeline
 
 1. Replace the placeholders in the `infra/content-understanding-*.json` files:
    - `content-understanding-datasource.json` — storage account resource ID

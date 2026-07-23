@@ -312,6 +312,12 @@ flowchart LR
         Requires the <code>2026-05-01-preview</code> API and a Foundry (Azure AI Services) resource attached to the
         skillset. The index uses the same field convention as the primary index, so the agent's search tool works against it unchanged.
       </div>
+      <p class="lead" style="margin-top:1rem">
+        <strong>One-command backing infra:</strong> <code>infra/content-understanding.bicep</code> provisions the
+        Foundry/Azure OpenAI account (with <code>gpt-4o</code> + <code>text-embedding-3-large</code> deployments),
+        a storage account and container, and the role assignments the search service's managed identity needs —
+        so no keys are stored in the skillset definition.
+      </p>
     </section>
 
     <!-- Quickstart -->
