@@ -1,0 +1,45 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>AiSearchAgent</RootNamespace>
+    <UserSecretsId>ai-search-agent</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="AiSearchAgent.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Microsoft Agent Framework -->
+    <PackageReference Include="Microsoft.Agents.AI" Version="1.0.0-preview.251001.2" />
+    <PackageReference Include="Microsoft.Agents.AI.OpenAI" Version="1.0.0-preview.251001.2" />
+    <PackageReference Include="Microsoft.Extensions.AI" Version="9.9.1" />
+    <PackageReference Include="Microsoft.Extensions.AI.OpenAI" Version="9.9.1-preview.1.25474.6" />
+
+    <!-- Azure OpenAI chat model (gpt-4o) -->
+    <PackageReference Include="Azure.AI.OpenAI" Version="2.1.0" />
+
+    <!-- Azure AI Search data-plane client -->
+    <PackageReference Include="Azure.Search.Documents" Version="11.6.0" />
+
+    <!-- Auth -->
+    <PackageReference Include="Azure.Identity" Version="1.13.2" />
+
+    <!-- Configuration -->
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="9.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>

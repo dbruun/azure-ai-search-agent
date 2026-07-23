@@ -1,0 +1,12 @@
+{
+  "name": "sharepoint-datasource",
+  "type": "sharepoint",
+  "indexerPermissionOptions": ["userIds", "groupIds"],
+  "credentials": {
+    "connectionString": "SharePointOnlineEndpoint=https://CONTOSO.sharepoint.com/sites/YOUR_SITE;ApplicationId=YOUR_ENTRA_APP_CLIENT_ID;TenantId=d64bea8b-d6b8-4662-b544-534df0893609"
+  },
+  "container": {
+    "name": "defaultSiteLibrary",
+    "query": null
+  }
+}

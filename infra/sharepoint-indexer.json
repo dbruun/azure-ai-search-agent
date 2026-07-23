@@ -1,0 +1,21 @@
+{
+  "name": "sharepoint-indexer",
+  "dataSourceName": "sharepoint-datasource",
+  "targetIndexName": "sharepoint-index",
+  "parameters": {
+    "configuration": {
+      "indexedFileNameExtensions": ".pdf,.docx,.pptx,.txt,.html",
+      "dataToExtract": "contentAndMetadata"
+    }
+  },
+  "fieldMappings": [
+    { "sourceFieldName": "content", "targetFieldName": "chunk" },
+    { "sourceFieldName": "metadata_spo_item_name", "targetFieldName": "title" },
+    { "sourceFieldName": "metadata_spo_item_name", "targetFieldName": "sourceDoc" },
+    { "sourceFieldName": "metadata_spo_item_weburi", "targetFieldName": "url" },
+
+    { "sourceFieldName": "metadata_user_ids", "targetFieldName": "UserIds" },
+    { "sourceFieldName": "metadata_group_ids", "targetFieldName": "GroupIds" },
+    { "sourceFieldName": "metadata_sharepoint_site_url", "targetFieldName": "SharePointSiteUrl" }
+  ]
+}

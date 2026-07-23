@@ -1,0 +1,16 @@
+## Ignore build outputs
+bin/
+obj/
+
+## User-specific / secrets
+*.user
+appsettings.Development.json
+appsettings.Local.json
+.env
+
+## Rider / VS
+.vs/
+.idea/
+
+## Azure
+.azure/

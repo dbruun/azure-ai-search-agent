@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Search Agent — Grounded RAG agent on Azure AI Search</title>
+  <meta name="description" content="A .NET / Microsoft Agent Framework app: an Azure AI Search agent that answers questions grounded in your index and cites source documents and page numbers." />
+  <style>
+    :root {
+      --bg: #0d1117;
+      --bg-elev: #161b22;
+      --bg-elev-2: #1c2330;
+      --border: #30363d;
+      --text: #e6edf3;
+      --text-dim: #9da7b3;
+      --accent: #4ea1ff;
+      --accent-2: #7ee787;
+      --accent-3: #d2a8ff;
+      --code-bg: #0b0f14;
+      --radius: 12px;
+      --maxw: 960px;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.65;
+    }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    code, pre {
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      font-size: 0.9em;
+    }
+    :not(pre) > code {
+      background: var(--bg-elev-2);
+      padding: 0.15em 0.4em;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+    }
+    pre {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem 1.2rem;
+      overflow-x: auto;
+    }
+    header.hero {
+      background:
+        radial-gradient(1200px 400px at 20% -10%, rgba(78,161,255,0.18), transparent),
+        radial-gradient(1000px 400px at 90% -20%, rgba(210,168,255,0.14), transparent);
+      border-bottom: 1px solid var(--border);
+    }
+    .wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 1.25rem; }
+    .hero-inner { padding: 4rem 1.25rem 3rem; }
+    .badge-row { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.5rem; }
+    .badge {
+      font-size: 0.75rem;
+      padding: 0.25rem 0.65rem;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--bg-elev);
+      color: var(--text-dim);
+    }
+    .badge.green { color: var(--accent-2); border-color: rgba(126,231,135,0.4); }
+    .badge.blue { color: var(--accent); border-color: rgba(78,161,255,0.4); }
+    .badge.purple { color: var(--accent-3); border-color: rgba(210,168,255,0.4); }
+    h1 {
+      font-size: clamp(2rem, 5vw, 3rem);
+      line-height: 1.15;
+      margin: 0 0 0.75rem;
+      letter-spacing: -0.02em;
+    }
+    .tagline { font-size: 1.2rem; color: var(--text-dim); max-width: 640px; margin: 0 0 2rem; }
+    .cta-row { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      padding: 0.6rem 1.1rem; border-radius: 8px;
+      border: 1px solid var(--border); background: var(--bg-elev);
+      color: var(--text); font-weight: 600; font-size: 0.95rem;
+    }
+    .btn.primary { background: var(--accent); color: #06101f; border-color: transparent; }
+    .btn:hover { text-decoration: none; border-color: var(--accent); }
+    main section { padding: 3rem 0; border-bottom: 1px solid var(--border); }
+    h2 { font-size: 1.6rem; margin: 0 0 1rem; letter-spacing: -0.01em; }
+    h3 { font-size: 1.15rem; margin: 1.5rem 0 0.5rem; }
+    p { color: var(--text); }
+    .lead { color: var(--text-dim); }
+    .grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+    .card {
+      background: var(--bg-elev);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+    }
+    .card h3 { margin-top: 0; }
+    .card p { color: var(--text-dim); margin-bottom: 0; }
+    table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.92rem; }
+    th, td { text-align: left; padding: 0.6rem 0.75rem; border-bottom: 1px solid var(--border); }
+    th { color: var(--text-dim); font-weight: 600; }
+    td code { white-space: nowrap; }
+    .diagram { background: var(--bg-elev); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; overflow-x: auto; }
+    .note {
+      border-left: 3px solid var(--accent);
+      background: rgba(78,161,255,0.08);
+      padding: 0.75rem 1rem; border-radius: 0 8px 8px 0; margin: 1rem 0;
+      color: var(--text-dim);
+    }
+    ol.steps { padding-left: 1.2rem; }
+    ol.steps li { margin-bottom: 1rem; }
+    footer { padding: 2.5rem 0 3.5rem; color: var(--text-dim); font-size: 0.9rem; }
+    footer .wrap { display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: space-between; }
+    .kbd-list { list-style: none; padding: 0; margin: 0; }
+    .kbd-list li { padding: 0.4rem 0; border-bottom: 1px solid var(--border); color: var(--text-dim); }
+    .kbd-list li:last-child { border-bottom: none; }
+    .kbd-list strong { color: var(--text); }
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <div class="wrap hero-inner">
+      <div class="badge-row">
+        <span class="badge blue">.NET 10</span>
+        <span class="badge purple">Microsoft Agent Framework</span>
+        <span class="badge">Azure OpenAI · gpt-4o</span>
+        <span class="badge">Azure AI Search</span>
+        <span class="badge purple">SharePoint ACLs (preview)</span>
+        <span class="badge green">23 tests passing</span>
+      </div>
+      <h1>AI Search Agent</h1>
+      <p class="tagline">
+        A code-first <strong>agentic-framework</strong> app that recreates a Microsoft Foundry Azure AI
+        Search agent. It answers questions grounded in Azure AI Search and cites the exact source
+        documents and page numbers — with optional SharePoint content secured by document-level access control.
+      </p>
+      <div class="cta-row">
+        <a class="btn primary" href="#quickstart">Get started</a>
+        <a class="btn" href="#architecture">How it works</a>
+        <a class="btn" href="#sharepoint">SharePoint ACLs</a>
+        <a class="btn" href="https://github.com/dbruun/azure-ai-search-agent" id="repo-link">View on GitHub</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <!-- Overview -->
+    <section id="overview">
+      <h2>What is this?</h2>
+      <p class="lead">
+        The original agent lives in Microsoft Foundry as a low-code "prompt" agent. This project
+        reproduces it as a maintainable, testable .NET application using the Microsoft Agent
+        Framework, plus the infrastructure to deploy the backing Azure AI Search service and index.
+      </p>
+      <div class="grid">
+        <div class="card">
+          <h3>🔎 Grounded answers</h3>
+          <p>Every response is retrieved from the <code>documents-index</code> search index — the agent is instructed never to invent sources.</p>
+        </div>
+        <div class="card">
+          <h3>📄 Page-level citations</h3>
+          <p>Answers include a "Pages Referenced" section listing each source document and the exact page ranges used.</p>
+        </div>
+        <div class="card">
+          <h3>🧩 Reproducible infra</h3>
+          <p>Bicep provisions the search service; a script creates the index schema (fields, semantic &amp; vector config).</p>
+        </div>
+        <div class="card">
+          <h3>✅ Tested</h3>
+          <p>xUnit + Moq cover search options fidelity, the citation payload shape, and prompt drift guards.</p>
+        </div>
+        <div class="card">
+          <h3>🔒 SharePoint ACLs</h3>
+          <p>An optional SharePoint index enforces <strong>document-level access control</strong> at query time (preview) — users only see what they're permitted to.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Architecture -->
+    <section id="architecture">
+      <h2>Architecture</h2>
+      <p class="lead">
+        The user chats with the agent; the model decides when to call the Azure AI Search tool,
+        which returns passages plus document/page metadata used to build cited answers.
+      </p>
+      <div class="diagram">
+        <pre class="mermaid">
+flowchart LR
+    U["User"] --> A["AI Search Agent<br/>(Microsoft Agent Framework)"]
+    A -- prompt --> M["Azure OpenAI<br/>gpt-4o"]
+    M -- tool call --> T["azure_ai_search tool<br/>(query_type: semantic, top_k: 11)"]
+    T --> S["Azure AI Search<br/>documents-index"]
+    S -- "chunks + sourceDoc + pageFrom/pageTo" --> T
+    T --> M
+    M -- "answer + Pages Referenced" --> A
+    A --> U
+        </pre>
+      </div>
+      <div class="note">
+        GitHub Pages hosts this documentation only. The agent itself runs as a .NET app and
+        requires an Azure OpenAI resource and an Azure AI Search service (it is not executed in the browser).
+      </div>
+    </section>
+
+    <!-- Config mapping -->
+    <section id="config">
+      <h2>Faithful to the Foundry definition</h2>
+      <p class="lead">Each setting from the original agent maps directly to code in this repo.</p>
+      <table>
+        <thead>
+          <tr><th>Foundry setting</th><th>Value</th><th>Where it lives</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Model</td><td><code>gpt-4o</code></td><td><code>AzureOpenAI:Deployment</code></td></tr>
+          <tr><td>Instructions</td><td>full prompt</td><td><code>AgentInstructions.cs</code></td></tr>
+          <tr><td>Tool</td><td><code>azure_ai_search</code></td><td><code>Tools/AzureAiSearchTool.cs</code></td></tr>
+          <tr><td>Index</td><td><code>documents-index</code></td><td><code>AzureAISearch:IndexName</code></td></tr>
+          <tr><td>Query type</td><td><code>semantic</code> (<code>sem</code> config)</td><td><code>SearchQueryType.Semantic</code></td></tr>
+          <tr><td>Top K</td><td><code>11</code></td><td><code>AzureAISearch:TopK</code></td></tr>
+        </tbody>
+      </table>
+
+      <h3>Index schema (<code>documents-index</code>)</h3>
+      <p class="lead">Key fields that power retrieval and citations:</p>
+      <ul class="kbd-list">
+        <li><strong>id</strong> — key (keyword analyzer)</li>
+        <li><strong>chunk</strong> — searchable passage text</li>
+        <li><strong>sourceDoc</strong>, <strong>title</strong>, <strong>url</strong> — citation metadata</li>
+        <li><strong>pageFrom</strong> / <strong>pageTo</strong> — page range (Int32)</li>
+        <li><strong>vector</strong> — 3072-dim, HNSW / cosine (for future vector/hybrid search)</li>
+      </ul>
+    </section>
+
+    <!-- SharePoint ACLs -->
+    <section id="sharepoint">
+      <h2>SharePoint with document-level ACLs <span class="badge purple" style="vertical-align:middle">preview</span></h2>
+      <p class="lead">
+        An optional second index, <code>sharepoint-index</code>, is populated by a SharePoint Online
+        indexer that ingests each item's permissions. At query time the signed-in user's Microsoft
+        Entra token is forwarded, and Azure AI Search trims results to documents that user may access —
+        no custom security-trimming code required.
+      </p>
+      <div class="diagram">
+        <pre class="mermaid">
+sequenceDiagram
+    participant SP as SharePoint Online
+    participant IX as SharePoint Indexer
+    participant SI as sharepoint-index<br/>(permissionFilter fields)
+    participant AG as Agent
+    participant AS as Azure AI Search
+
+    SP->>IX: content + ACLs (metadata_user_ids / group_ids)
+    IX->>SI: documents + UserIds / GroupIds / RbacScope
+    Note over AG,AS: Query time
+    AG->>AS: query + x-ms-query-source-authorization (user token)
+    AS->>AS: build security filter from token (oid + groups)
+    AS-->>AG: only documents the user is authorized to see
+        </pre>
+      </div>
+      <table>
+        <thead><tr><th>Stage</th><th>Mechanism</th></tr></thead>
+        <tbody>
+          <tr><td>Index</td><td><code>permissionFilterOption: enabled</code>; fields tagged <code>permissionFilter</code> (<code>userIds</code>, <code>groupIds</code>, <code>rbacScope</code>)</td></tr>
+          <tr><td>Ingest</td><td>Data source <code>indexerPermissionOptions</code>; indexer maps <code>metadata_user_ids</code> / <code>metadata_group_ids</code> / <code>metadata_sharepoint_site_url</code></td></tr>
+          <tr><td>Query</td><td>User token in <code>x-ms-query-source-authorization</code>; preview API <code>2026-05-01-preview</code></td></tr>
+        </tbody>
+      </table>
+      <div class="note">
+        ACL enforcement relies on the caller's identity, so the app authenticates as the
+        <strong>signed-in user</strong> (not a service principal). API keys bypass ACLs and are not used for this index.
+      </div>
+    </section>
+
+    <!-- Quickstart -->
+    <section id="quickstart">
+      <h2>Quick start</h2>
+      <ol class="steps">
+        <li>
+          <strong>Deploy Azure AI Search</strong>
+          <pre><code>az group create --name TRSDemo --location centralus
+
+az deployment group create \
+  --resource-group TRSDemo \
+  --template-file infra/main.bicep \
+  --parameters infra/main.parameters.json</code></pre>
+        </li>
+        <li>
+          <strong>Create the index</strong> (data-plane, not part of ARM/Bicep)
+          <pre><code>./scripts/create-index.ps1 -SearchServiceName trsdemosearch -ResourceGroup TRSDemo</code></pre>
+        </li>
+        <li>
+          <strong>Configure endpoints</strong> in <code>src/AiSearchAgent/appsettings.json</code>,
+          or via environment variables:
+          <pre><code>$env:AZURE_OPENAI_ENDPOINT = "https://&lt;your-openai&gt;.openai.azure.com/"
+$env:AZURE_SEARCH_ENDPOINT = "https://trsdemosearch.search.windows.net"</code></pre>
+        </li>
+        <li>
+          <strong>Run</strong>
+          <pre><code>dotnet run --project src/AiSearchAgent</code></pre>
+        </li>
+        <li>
+          <strong>Test</strong>
+          <pre><code>dotnet test</code></pre>
+        </li>
+        <li>
+          <strong>(Optional) Add the SharePoint ACL index</strong> — see
+          <a href="#sharepoint">SharePoint with document-level ACLs</a>. Fill in the
+          data-source connection string, then:
+          <pre><code>./scripts/create-sharepoint-index.ps1 \
+  -SearchServiceName trsdemosearch -ResourceGroup TRSDemo -RunIndexer</code></pre>
+          Enable it in <code>appsettings.json</code> under <code>SharePointSearch</code>.
+        </li>
+      </ol>
+      <div class="note">
+        Authentication defaults to <code>DefaultAzureCredential</code> (Entra ID). The identity needs
+        <em>Cognitive Services OpenAI User</em> on the Azure OpenAI resource and
+        <em>Search Index Data Reader</em> on the search service — or provide API keys in config.
+      </div>
+    </section>
+
+    <!-- Behavior -->
+    <section id="behavior">
+      <h2>How the agent responds</h2>
+      <p class="lead">The instructions enforce a consistent, citation-first output format:</p>
+      <ul>
+        <li>Begins with a short conceptual checklist (3–7 bullets).</li>
+        <li>Answers only from Azure AI Search results (the <code>documents-index</code> and, when enabled, the ACL-secured <code>sharepoint-index</code>).</li>
+        <li>Ends with a <strong>Pages Referenced</strong> section grouping page ranges by document, in ascending order.</li>
+        <li>Falls back to "Pages not available" when metadata is missing — and never fabricates sources.</li>
+      </ul>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <span>AI Search Agent · Documentation</span>
+      <span>Built with .NET 10 &amp; the Microsoft Agent Framework</span>
+    </div>
+  </footer>
+
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: 'dark',
+      themeVariables: {
+        background: '#161b22',
+        primaryColor: '#1c2330',
+        primaryBorderColor: '#30363d',
+        primaryTextColor: '#e6edf3',
+        lineColor: '#4ea1ff',
+        fontfamily: 'Segoe UI, sans-serif'
+      }
+    });
+
+    // Point the "View on GitHub" link at the actual repo when served from *.github.io
+    const host = location.hostname;
+    if (host.endsWith('github.io')) {
+      const owner = host.split('.')[0];
+      const parts = location.pathname.split('/').filter(Boolean);
+      const repo = parts.length ? parts[0] : `${owner}.github.io`;
+      const link = document.getElementById('repo-link');
+      if (link) link.href = `https://github.com/${owner}/${repo}`;
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,160 @@
+{
+  "name": "sharepoint-index",
+  "permissionFilterOption": "enabled",
+  "fields": [
+    {
+      "name": "id",
+      "type": "Edm.String",
+      "key": true,
+      "searchable": true,
+      "filterable": true,
+      "retrievable": true,
+      "stored": true,
+      "sortable": true,
+      "facetable": true,
+      "analyzer": "keyword"
+    },
+    {
+      "name": "parentId",
+      "type": "Edm.String",
+      "searchable": true,
+      "filterable": true,
+      "retrievable": true,
+      "stored": true,
+      "sortable": true,
+      "facetable": true
+    },
+    {
+      "name": "chunk",
+      "type": "Edm.String",
+      "searchable": true,
+      "filterable": false,
+      "retrievable": true,
+      "stored": true,
+      "sortable": false,
+      "facetable": false
+    },
+    {
+      "name": "vector",
+      "type": "Collection(Edm.Single)",
+      "searchable": true,
+      "filterable": false,
+      "retrievable": false,
+      "stored": true,
+      "sortable": false,
+      "facetable": false,
+      "dimensions": 3072,
+      "vectorSearchProfile": "vp"
+    },
+    {
+      "name": "title",
+      "type": "Edm.String",
+      "searchable": true,
+      "filterable": true,
+      "retrievable": true,
+      "stored": true,
+      "sortable": true,
+      "facetable": true
+    },
+    {
+      "name": "sourceDoc",
+      "type": "Edm.String",
+      "searchable": true,
+      "filterable": true,
+      "retrievable": true,
+      "stored": true,
+      "sortable": true,
+      "facetable": true
+    },
+    {
+      "name": "url",
+      "type": "Edm.String",
+      "searchable": false,
+      "filterable": true,
+      "retrievable": true,
+      "stored": true,
+      "sortable": true,
+      "facetable": false
+    },
+    {
+      "name": "SharePointSiteUrl",
+      "type": "Edm.String",
+      "searchable": false,
+      "filterable": true,
+      "retrievable": false,
+      "stored": true,
+      "sortable": false,
+      "facetable": false
+    },
+    {
+      "name": "UserIds",
+      "type": "Collection(Edm.String)",
+      "permissionFilter": "userIds",
+      "searchable": false,
+      "filterable": true,
+      "retrievable": false,
+      "stored": true,
+      "sortable": false,
+      "facetable": false
+    },
+    {
+      "name": "GroupIds",
+      "type": "Collection(Edm.String)",
+      "permissionFilter": "groupIds",
+      "searchable": false,
+      "filterable": true,
+      "retrievable": false,
+      "stored": true,
+      "sortable": false,
+      "facetable": false
+    },
+    {
+      "name": "RbacScope",
+      "type": "Edm.String",
+      "permissionFilter": "rbacScope",
+      "searchable": false,
+      "filterable": true,
+      "retrievable": false,
+      "stored": true,
+      "sortable": false,
+      "facetable": false
+    }
+  ],
+  "similarity": {
+    "@odata.type": "#Microsoft.Azure.Search.BM25Similarity"
+  },
+  "semantic": {
+    "configurations": [
+      {
+        "name": "sem",
+        "prioritizedFields": {
+          "titleField": { "fieldName": "title" },
+          "prioritizedContentFields": [
+            { "fieldName": "chunk" }
+          ],
+          "prioritizedKeywordsFields": []
+        }
+      }
+    ]
+  },
+  "vectorSearch": {
+    "algorithms": [
+      {
+        "name": "hnsw-algo",
+        "kind": "hnsw",
+        "hnswParameters": {
+          "metric": "cosine",
+          "m": 4,
+          "efConstruction": 400,
+          "efSearch": 500
+        }
+      }
+    ],
+    "profiles": [
+      {
+        "name": "vp",
+        "algorithm": "hnsw-algo"
+      }
+    ]
+  }
+}
